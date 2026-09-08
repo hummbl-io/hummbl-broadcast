@@ -12,7 +12,7 @@
 ## Governance Standards
 
 This repository follows the HUMMBL Repo Standard.
-Canonical reference: `hummbl-io/hummbl-governance/docs/standards/HUMMBL_REPO_STANDARD.md`
+Canonical reference: `hummbl-io/oss/packages/python/hummbl-governance/docs/standards/HUMMBL_REPO_STANDARD.md`
 
 - Root governance is model-, provider-, and vendor-neutral.
 - Agent conventions adhere to HUMMBL coordination and verification protocols.
