@@ -65,9 +65,17 @@ class Daemon:
                 raise ValueError("publisher.mode=rtmp requires publisher.rtmp_url")
             return RTMPPublisher(
                 self.cfg.publisher.rtmp_url,
-                self.cfg.publisher.rtmp_key,
+                self._resolve_rtmp_key(),
             )
         return FilePublisher(self.cfg.publisher.output_dir)
+
+    def _resolve_rtmp_key(self) -> str | None:
+        """Key resolution order: key file > inline config. File is preferred so
+        the secret can live in a 0600 file outside any committable config."""
+        pub = self.cfg.publisher
+        if pub.rtmp_key_file:
+            return Path(pub.rtmp_key_file).read_text(encoding="utf-8").strip()
+        return pub.rtmp_key
 
     async def load_prompts(self) -> int:
         path = Path(self.cfg.prompts_path)
