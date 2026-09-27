@@ -1,0 +1,13 @@
+{
+  "repo": "hummbl-broadcast",
+  "domain": "broadcast.hummbl.dev",
+  "schedule_blocks": 4,
+  "receipts_count": 16,
+  "adapters_supported": [
+    "MiniMax-H3",
+    "MiniMax-H3 Max",
+    "Mock"
+  ],
+  "daily_cost_cap_usd": 10.0,
+  "status": "24/7 ACTIVE"
+}
