@@ -1,6 +1,7 @@
 """Security regression tests: the stream key must never reach a child argv."""
 
 import asyncio
+import shutil
 
 import pytest
 
@@ -11,6 +12,13 @@ from hummbl_broadcast.rtmp_client import RTMPSession
 from .test_rtmp_client import make_flv
 
 SECRET = "UNIT-TEST-STREAM-KEY-7d2c"
+
+
+@pytest.fixture(autouse=True)
+def _fake_ffmpeg_on_path(monkeypatch):
+    """RTMPPublisher requires ffmpeg in PATH at construction; these tests mock
+    the subprocess itself, so pretend the binary exists everywhere."""
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/ffmpeg")
 
 
 class _FakeProc:
