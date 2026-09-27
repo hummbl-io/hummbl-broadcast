@@ -1,0 +1,162 @@
+[
+  {
+    "ts": "2026-09-01T02:54:40.594196Z",
+    "event": "startup",
+    "prompt_id": null,
+    "task_id": null,
+    "tier": null,
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": "adapter=mock loaded=5"
+  },
+  {
+    "ts": "2026-09-01T02:54:40.606888Z",
+    "event": "submit",
+    "prompt_id": "intro-01",
+    "task_id": "f22e79f3-cc9c-4c7c-908a-e6582352f5f5",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:40.621861Z",
+    "event": "submit",
+    "prompt_id": "intro-02",
+    "task_id": "071cfc37-bc99-4af9-a58f-4f87ace8030e",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:40.637305Z",
+    "event": "submit",
+    "prompt_id": "loop-02",
+    "task_id": "ed8e1509-eb14-47e5-9749-71d10f79b371",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:40.652781Z",
+    "event": "submit",
+    "prompt_id": "loop-01",
+    "task_id": "9bd33db2-040b-4fc6-9565-a8823a91ff47",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:40.668416Z",
+    "event": "submit",
+    "prompt_id": "loop-03",
+    "task_id": "4abd101e-0d8a-49c9-b9ae-72085e40e884",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:41.277300Z",
+    "event": "success",
+    "prompt_id": "intro-01",
+    "task_id": "f22e79f3-cc9c-4c7c-908a-e6582352f5f5",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": 0.5,
+    "cost_usd": 0.0,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:41.289430Z",
+    "event": "success",
+    "prompt_id": "intro-02",
+    "task_id": "071cfc37-bc99-4af9-a58f-4f87ace8030e",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": 0.5,
+    "cost_usd": 0.0,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:41.304975Z",
+    "event": "success",
+    "prompt_id": "loop-02",
+    "task_id": "ed8e1509-eb14-47e5-9749-71d10f79b371",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": 0.5,
+    "cost_usd": 0.0,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:41.320375Z",
+    "event": "success",
+    "prompt_id": "loop-01",
+    "task_id": "9bd33db2-040b-4fc6-9565-a8823a91ff47",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": 0.5,
+    "cost_usd": 0.0,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:41.335893Z",
+    "event": "success",
+    "prompt_id": "loop-03",
+    "task_id": "4abd101e-0d8a-49c9-b9ae-72085e40e884",
+    "tier": "MiniMax-H3-Max-480P",
+    "latency_seconds": 0.5,
+    "cost_usd": 0.0,
+    "note": null
+  },
+  {
+    "ts": "2026-09-01T02:54:41.637879Z",
+    "event": "broadcast",
+    "prompt_id": "intro-01",
+    "task_id": null,
+    "tier": null,
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": "9ed1ff7d-9bad-4a47-b33c-a7ad2bf912cb.png"
+  },
+  {
+    "ts": "2026-09-01T02:54:41.657848Z",
+    "event": "broadcast",
+    "prompt_id": "intro-02",
+    "task_id": null,
+    "tier": null,
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": "eefe87a3-6f09-4059-a4b7-b61cb79fc639.png"
+  },
+  {
+    "ts": "2026-09-01T02:54:41.678030Z",
+    "event": "broadcast",
+    "prompt_id": "loop-02",
+    "task_id": null,
+    "tier": null,
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": "49875617-038a-4f7e-977c-117e90ca6d06.png"
+  },
+  {
+    "ts": "2026-09-01T02:54:41.699110Z",
+    "event": "broadcast",
+    "prompt_id": "loop-01",
+    "task_id": null,
+    "tier": null,
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": "5145f970-3b86-4238-9a0d-3909bf5dd6be.png"
+  },
+  {
+    "ts": "2026-09-01T02:54:41.718724Z",
+    "event": "broadcast",
+    "prompt_id": "loop-03",
+    "task_id": null,
+    "tier": null,
+    "latency_seconds": null,
+    "cost_usd": null,
+    "note": "cd09b85a-d30f-43be-8223-bc6e0cdf2a4b.png"
+  }
+]
