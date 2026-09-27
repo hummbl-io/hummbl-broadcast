@@ -34,7 +34,8 @@ class PublisherConfig(BaseModel):
     mode: str = "file"  # file | rtmp
     output_dir: str = str(Path(tempfile.gettempdir()) / "hummbl-broadcast")
     rtmp_url: str | None = None
-    rtmp_key: str | None = None
+    rtmp_key: str | None = None  # prefer rtmp_key_file over an inline value
+    rtmp_key_file: str | None = None  # path to a 0600 file holding the key
     loop: bool = True
 
 
@@ -71,6 +72,8 @@ class Config(BaseModel):
             cfg.publisher.rtmp_url = k
         if k := os.environ.get("BROADCAST_RTMP_KEY"):
             cfg.publisher.rtmp_key = k
+        if k := os.environ.get("BROADCAST_RTMP_KEY_FILE"):
+            cfg.publisher.rtmp_key_file = k
         if k := os.environ.get("BROADCAST_DRY_RUN"):
             cfg.dry_run = k.lower() not in ("0", "false", "no")
         return cfg
