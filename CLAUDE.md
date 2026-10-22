@@ -36,7 +36,7 @@ npm test
 ## Key Conventions
 
 - Python 3.11+ required (where applicable)
-- Apache 2.0 license
+- Dual MIT OR Apache-2.0 license (fleet standard)
 - Conventional Commits
 - Branch naming: `type/agent/short-desc`
 - No AI attribution in commit messages (no Co-authored-by, Generated-by, etc.)

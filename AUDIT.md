@@ -3,7 +3,7 @@
 **Date:** 2026-09-08
 **Repo:** hummbl-broadcast
 **Python:** 3.11+ (where applicable)
-**License:** Apache-2.0
+**License:** MIT OR Apache-2.0 (dual, fleet standard — see LICENSE-MIT, LICENSE-APACHE)
 
 ---
 
@@ -17,7 +17,7 @@ hummbl-broadcast is 24/7 ai-generated video broadcast pipeline for hummbl. This 
 |-----------|--------|-------|
 | AGENTS.md | Present | Agent operating contract |
 | README.md | Present | Operator-facing summary |
-| LICENSE | Present | Apache-2.0 |
+| LICENSE | Present | MIT OR Apache-2.0 (dual) |
 | CI | Present | GitHub Actions (where configured) |
 | Tests | Varies | See repo for test inventory |
 

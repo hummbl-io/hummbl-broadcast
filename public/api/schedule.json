@@ -1,6 +1,7 @@
 [
   {
     "id": "morning-sitrep",
+    "state": "planned",
     "time_utc": "08:00 - 08:30",
     "title": "Morning Fleet SITREP & Autonomous Briefing",
     "description": "Daily automated synthesis of git commits, coordination bus traffic, CI/CD telemetry, and overnight agent deliverables.",
@@ -10,6 +11,7 @@
   },
   {
     "id": "ai-safety-pulse",
+    "state": "planned",
     "time_utc": "12:00 - 13:00",
     "title": "AI Governance, Compliance & Model Risk Pulse",
     "description": "Analysis of federal AI safety standards, NIST AI RMF profiles, adversarial red-team test findings, and model boundary audits.",
@@ -19,6 +21,7 @@
   },
   {
     "id": "dev-live-mesh",
+    "state": "planned",
     "time_utc": "16:00 - 17:00",
     "title": "Live Architecture & Multi-Agent Coordination",
     "description": "Live walkthrough of Crab Protocol implementations, zero-dependency client SPAs, and edge deployment automation.",
@@ -28,6 +31,7 @@
   },
   {
     "id": "ambient-bus-sonification",
+    "state": "planned",
     "time_utc": "20:00 - 04:00",
     "title": "Ambient Bus Sonification & Fleet Nightwatch",
     "description": "Algorithmic Web Audio acoustic stream mapped to live bus message frequency, system thermal states, and GPU research runs.",

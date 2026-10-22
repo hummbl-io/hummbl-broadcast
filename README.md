@@ -25,7 +25,10 @@ Key invariants:
 - Buffer ahead of broadcast clock ≥ MIN_BUFFER_SECONDS at all times
 - Cost governor caps spend per hour/day (configurable)
 - Kill switch stops generation + flushes RTMP gracefully
-- Every clip gets a receipt: prompt hash, model, latency, cost, content URL
+- Every clip gets a receipt: model, latency, cost, content URL
+  (**prompt hash is specified but NOT implemented** — `receipts.py` is a plain
+  JSONL appender with no hashing or signing, so the receipt log is append-only,
+  not cryptographically verifiable)
 
 ## Status
 
