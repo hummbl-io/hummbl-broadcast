@@ -757,10 +757,10 @@ def build():
 
     # Write HTML
     html_content = generate_html(receipts)
-    (PUBLIC_DIR / "index.html").write_text(html_content, encoding="utf-8")
+    (PUBLIC_DIR / "index.html").write_text(html_content, encoding="utf-8", newline="\n")
 
     # Write API endpoints
-    (API_DIR / "schedule.json").write_text(json.dumps(SCHEDULE_DATA, indent=2), encoding="utf-8")
+    (API_DIR / "schedule.json").write_text(json.dumps(SCHEDULE_DATA, indent=2), encoding="utf-8", newline="\n")
     # Envelope, not a bare array: a consumer must not be able to read these as
     # real audit receipts. The disclosure travels with the data.
     receipts_doc = {
@@ -776,7 +776,7 @@ def build():
         "receipts": receipts,
     }
     (API_DIR / "receipts.json").write_text(
-        json.dumps(receipts_doc, indent=2), encoding="utf-8"
+        json.dumps(receipts_doc, indent=2), encoding="utf-8", newline="\n"
     )
 
     summary = {
@@ -800,7 +800,7 @@ def build():
             "runtime state. Cannot report liveness."
         ),
     }
-    (API_DIR / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    (API_DIR / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8", newline="\n")
     # A static file on a CDN cannot observe the pipeline, so it must not claim
     # to. This endpoint reports only that the site build was published, and says
     # plainly that it is not a liveness probe.
@@ -817,7 +817,7 @@ def build():
         "pipeline_broadcast_state": "not-broadcasting",
         "site_build_version": "0.1.0-prealpha",
     }
-    (API_DIR / "health.json").write_text(json.dumps(health, indent=2), encoding="utf-8")
+    (API_DIR / "health.json").write_text(json.dumps(health, indent=2), encoding="utf-8", newline="\n")
 
     print(f"Artifacts successfully written to {PUBLIC_DIR}")
 
