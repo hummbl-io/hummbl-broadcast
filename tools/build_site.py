@@ -3,24 +3,49 @@
 
 Target Subdomain: broadcast.hummbl.dev
 Zero Marginal Cost Floor: 100% client-side vanilla SPA, zero external scripts.
+
+Honesty invariant: this builder MUST NOT emit operational state it cannot
+observe. The published artifacts are static files on a CDN; they can describe
+what the pipeline is *designed* to do, never what it is *currently* doing.
+The pipeline is a skeleton with no verified real generation run (see README.md
+"Status" and docs/benchmarks.md "Status: NOT RUN"), so every published surface
+is labelled pre-alpha and all receipt data is labelled mock.
 """
 
 from __future__ import annotations
 
 import json
-import os
-import shutil
-import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PUBLIC_DIR = REPO_ROOT / "public"
 API_DIR = PUBLIC_DIR / "api"
 
+# Single source of truth for pricing: the package's verified table. Imported
+# rather than restated so the published page cannot drift from the code.
+# Fail loud if unavailable -- do not fall back to hardcoded guesses.
+try:
+    from hummbl_broadcast.models import PRICE_PER_SECOND, ModelTier
+except ImportError as exc:  # pragma: no cover - build environment error
+    raise SystemExit(
+        "build_site.py requires the hummbl_broadcast package "
+        '(pip install -e ".[dev]") so published pricing matches '
+        f"models.PRICE_PER_SECOND. Import failed: {exc}"
+    ) from exc
+
+# Published state. The pipeline has never completed a verified real run.
+BROADCAST_STATE = "PRE-ALPHA - NOT BROADCASTING"
+PIPELINE_STAGE = "skeleton"
+
+PRICE_H3 = PRICE_PER_SECOND[ModelTier.H3]
+PRICE_H3_MAX_480 = PRICE_PER_SECOND[ModelTier.H3_MAX_480P]
+PRICE_H3_MAX_768 = PRICE_PER_SECOND[ModelTier.H3_MAX_768P]
+
 
 SCHEDULE_DATA = [
     {
         "id": "morning-sitrep",
+        "state": "planned",
         "time_utc": "08:00 - 08:30",
         "title": "Morning Fleet SITREP & Autonomous Briefing",
         "description": "Daily automated synthesis of git commits, coordination bus traffic, CI/CD telemetry, and overnight agent deliverables.",
@@ -30,6 +55,7 @@ SCHEDULE_DATA = [
     },
     {
         "id": "ai-safety-pulse",
+        "state": "planned",
         "time_utc": "12:00 - 13:00",
         "title": "AI Governance, Compliance & Model Risk Pulse",
         "description": "Analysis of federal AI safety standards, NIST AI RMF profiles, adversarial red-team test findings, and model boundary audits.",
@@ -39,6 +65,7 @@ SCHEDULE_DATA = [
     },
     {
         "id": "dev-live-mesh",
+        "state": "planned",
         "time_utc": "16:00 - 17:00",
         "title": "Live Architecture & Multi-Agent Coordination",
         "description": "Live walkthrough of Crab Protocol implementations, zero-dependency client SPAs, and edge deployment automation.",
@@ -48,6 +75,7 @@ SCHEDULE_DATA = [
     },
     {
         "id": "ambient-bus-sonification",
+        "state": "planned",
         "time_utc": "20:00 - 04:00",
         "title": "Ambient Bus Sonification & Fleet Nightwatch",
         "description": "Algorithmic Web Audio acoustic stream mapped to live bus message frequency, system thermal states, and GPU research runs.",
@@ -58,18 +86,25 @@ SCHEDULE_DATA = [
 ]
 
 
-def load_mock_receipts() -> list[dict]:
+def load_mock_receipts() -> tuple[list[dict], bool]:
+    """Load mock-adapter receipts, if a local smoke run left any.
+
+    Returns (receipts, file_present). receipts.mock.jsonl is gitignored, so a
+    clean CI checkout legitimately has none -- that must publish as an empty
+    log, never as fabricated rows. The caller records provenance either way.
+    """
     receipts_file = REPO_ROOT / "receipts.mock.jsonl"
+    if not receipts_file.exists():
+        return [], False
     receipts = []
-    if receipts_file.exists():
-        for line in receipts_file.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line:
-                try:
-                    receipts.append(json.loads(line))
-                except Exception:
-                    pass
-    return receipts
+    for line in receipts_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            try:
+                receipts.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+    return receipts, True
 
 
 def generate_html(receipts: list[dict]) -> str:
@@ -127,18 +162,34 @@ def generate_html(receipts: list[dict]) -> str:
       align-items: center;
       gap: 0.75rem;
     }}
-    .live-dot {{
+    .offline-dot {{
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      background: var(--primary);
-      box-shadow: 0 0 10px var(--primary);
-      animation: pulse 1.5s infinite;
+      background: var(--text-muted);
+      border: 1px solid #4b5563;
     }}
-    @keyframes pulse {{
-      0% {{ opacity: 1; transform: scale(1); }}
-      50% {{ opacity: 0.4; transform: scale(0.85); }}
-      100% {{ opacity: 1; transform: scale(1); }}
+    .notice {{
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+      line-height: 1.55;
+    }}
+    .notice strong {{ color: var(--accent); }}
+    .badge-mock {{
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.15rem 0.5rem;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }}
     .brand h1 {{
       font-size: 1.25rem;
@@ -371,12 +422,12 @@ def generate_html(receipts: list[dict]) -> str:
 <body>
   <header>
     <div class="brand">
-      <div class="live-dot"></div>
+      <div class="offline-dot"></div>
       <div>
         <h1>HUMMBL Broadcast</h1>
-        <div style="font-size: 0.75rem; color: var(--text-muted);">24/7 Governed Video & Stream Production Pipeline</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">24/7 Governed Video & Stream Production Pipeline &mdash; pre-alpha skeleton</div>
       </div>
-      <span class="badge">ON AIR</span>
+      <span class="badge">NOT BROADCASTING</span>
     </div>
     <nav>
       <button class="nav-btn active" onclick="switchTab('schedule')">Broadcast Schedule</button>
@@ -387,24 +438,41 @@ def generate_html(receipts: list[dict]) -> str:
   </header>
 
   <main>
+    <div class="notice">
+      <strong>PRE-ALPHA &mdash; NOT BROADCASTING.</strong>
+      This page describes a design, not a running service. The pipeline is a skeleton:
+      no verified real MiniMax generation run has ever completed, no stream is live, and
+      no benchmarks have been measured (<code>docs/benchmarks.md</code> status: NOT RUN).
+      Every receipt shown on this site is <strong>mock adapter output</strong>, every
+      schedule block is <strong>planned</strong>, and every cost and latency figure is an
+      <strong>unverified projection</strong>. These artifacts are static files on a CDN and
+      cannot report live status.
+    </div>
+
     <div class="hero">
-      <h2>Autonomous Continuous Media Generation</h2>
+      <h2>Autonomous Continuous Media Generation &mdash; design</h2>
       <p>
-        <code>hummbl-broadcast</code> generates continuous video segments for the HUMMBL network. Controlled by a strict dual-mechanism Kill Switch and real-time Cost Governor, prompts are queued, rendered via pluggable AI adapters (MiniMax-H3 / H3 Max), watermarked, and dispatched with verifiable cryptographic audit receipts.
+        <code>hummbl-broadcast</code> is intended to generate continuous video segments for
+        the HUMMBL network. As designed, prompts are queued, rendered via pluggable AI
+        adapters (MiniMax-H3 / H3 Max), watermarked, and dispatched, with a dual-mechanism
+        kill switch and a cost governor bounding spend. Each event appends a plaintext
+        JSONL receipt (event, prompt id, task id, tier, latency, cost). Receipt hashing and
+        signing are <strong>specified but not implemented</strong> &mdash; the receipt log is
+        append-only, not cryptographically verifiable.
       </p>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Broadcast State</div>
-        <div class="stat-value" style="color: var(--primary);">24/7 ACTIVE</div>
+        <div class="stat-value" style="color: var(--text-muted); font-size: 1.1rem;">{BROADCAST_STATE}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Daily Segments</div>
+        <div class="stat-label">Daily Segments (planned)</div>
         <div class="stat-value">4 Blocks</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Cost Governor Cap</div>
+        <div class="stat-label">Configured Cost Cap</div>
         <div class="stat-value" style="color: var(--success);">$10.00 / day</div>
       </div>
       <div class="stat-card">
@@ -416,7 +484,7 @@ def generate_html(receipts: list[dict]) -> str:
     <!-- Schedule View -->
     <section id="view-schedule" class="view-section active">
       <div class="panel">
-        <h3>24-Hour Broadcast Lineup</h3>
+        <h3>24-Hour Broadcast Lineup <span class="badge-mock">PLANNED &mdash; NOT AIRING</span></h3>
         <div class="schedule-grid" id="scheduleContainer">
           <!-- Populated via script -->
         </div>
@@ -437,8 +505,9 @@ def generate_html(receipts: list[dict]) -> str:
             <div class="form-group">
               <label>Adapter / Model</label>
               <select id="adapterSelect" onchange="updateCostForecast()">
-                <option value="h3_max" selected>MiniMax-H3 Max ($0.05/sec)</option>
-                <option value="h3">MiniMax-H3 Standard ($0.03/sec)</option>
+                <option value="h3_max_480" selected>MiniMax-H3 Max 480P (${PRICE_H3_MAX_480:.2f}/sec)</option>
+                <option value="h3_max_768">MiniMax-H3 Max 768P (${PRICE_H3_MAX_768:.2f}/sec)</option>
+                <option value="h3">MiniMax-H3 768P (${PRICE_H3:.2f}/sec)</option>
                 <option value="mock">Mock Offline Adapter ($0.00)</option>
               </select>
             </div>
@@ -464,21 +533,29 @@ def generate_html(receipts: list[dict]) -> str:
 
           <div>
             <div class="cost-preview">
-              <h4 style="color: #fff; font-size: 1rem;">Governor Pre-Flight Estimation</h4>
+              <h4 style="color: #fff; font-size: 1rem;">Cost Projection <span class="badge-mock">UNVERIFIED</span></h4>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">
+                Client-side arithmetic over the published rate card. Not a governor
+                decision: the cost governor runs in the pipeline, not in this page.
+                Rates are MiniMax list prices; no real spend has been measured.
+              </p>
               <div style="display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
-                <span style="color: var(--text-muted);">Estimated Unit Cost:</span>
+                <span style="color: var(--text-muted);">Projected unit cost:</span>
                 <strong id="costEstimate" style="color: var(--success); font-family: var(--font-mono);">$0.20 USD</strong>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
-                <span style="color: var(--text-muted);">Estimated Latency:</span>
-                <strong id="latencyEstimate" style="color: var(--accent); font-family: var(--font-mono);">12-18 seconds</strong>
+                <span style="color: var(--text-muted);">Measured latency:</span>
+                <strong id="latencyEstimate" style="color: var(--accent); font-family: var(--font-mono);">not measured</strong>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                <span style="color: var(--text-muted);">Governor Status:</span>
-                <span style="color: var(--success); font-weight: 700;">APPROVED (Within $10 Cap)</span>
+                <span style="color: var(--text-muted);">Configured daily cap:</span>
+                <span style="font-family: var(--font-mono);">$10.00</span>
               </div>
               <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); background: #0e0f17; padding: 0.75rem; border-radius: 6px;">
-                <strong>Watermark Invariant:</strong> Every broadcast clip is composited with the Grove hummingbird badge (<code>#12633c</code>) before streaming.
+                <strong>Watermark invariant (designed):</strong> Every broadcast clip is
+                intended to be composited with the Grove hummingbird badge
+                (<code>#12633c</code>) before streaming. The compositor is a stub that
+                raises rather than fake a real clip; it has not run against real video.
               </div>
             </div>
           </div>
@@ -489,17 +566,25 @@ def generate_html(receipts: list[dict]) -> str:
     <!-- Receipts View -->
     <section id="view-receipts" class="view-section">
       <div class="panel">
-        <h3>Generation Receipts & Audit Logs</h3>
+        <h3>Generation Receipts <span class="badge-mock">MOCK DATA</span></h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Rows below are verbatim output of the <strong>mock</strong> adapter from a local
+          or CI smoke run. No real clip was generated, no money was spent, and no cost or
+          latency figure here reflects a real API call. Null fields are shown as
+          <code>&mdash;</code> and are never substituted with placeholder values.
+        </p>
         <div style="overflow-x: auto;">
           <table>
             <thead>
               <tr>
-                <th>Receipt ID</th>
-                <th>Model</th>
-                <th>Duration</th>
-                <th>Cost</th>
-                <th>Status</th>
                 <th>Timestamp</th>
+                <th>Event</th>
+                <th>Prompt ID</th>
+                <th>Task ID</th>
+                <th>Tier</th>
+                <th>Latency</th>
+                <th>Cost (mock)</th>
+                <th>Note</th>
               </tr>
             </thead>
             <tbody id="receiptsTableBody">
@@ -520,28 +605,28 @@ def generate_html(receipts: list[dict]) -> str:
               <span style="font-family: var(--font-mono); color: var(--primary);">/api/schedule.json</span>
               <a href="/api/schedule.json" target="_blank" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--card-border); padding: 0.2rem 0.5rem; border-radius: 4px;">GET raw</a>
             </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">24/7 linear broadcast schedule and cue sheets.</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Planned 24/7 linear schedule. Every block has <code>state: planned</code>; none has aired.</p>
           </div>
           <div style="background: #0f1019; padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-family: var(--font-mono); color: var(--primary);">/api/receipts.json</span>
               <a href="/api/receipts.json" target="_blank" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--card-border); padding: 0.2rem 0.5rem; border-radius: 4px;">GET raw</a>
             </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Completed broadcast clip generation audit receipts.</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Mock-adapter receipt log wrapped in a provenance envelope. Not real audit receipts: <code>is_real_generation</code> is false.</p>
           </div>
           <div style="background: #0f1019; padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-family: var(--font-mono); color: var(--primary);">/api/summary.json</span>
               <a href="/api/summary.json" target="_blank" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--card-border); padding: 0.2rem 0.5rem; border-radius: 4px;">GET raw</a>
             </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Broadcast pipeline capabilities and configuration metrics.</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Designed capabilities and configuration. Describes intent, not runtime state.</p>
           </div>
           <div style="background: #0f1019; padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-family: var(--font-mono); color: var(--primary);">/api/health.json</span>
               <a href="/api/health.json" target="_blank" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--card-border); padding: 0.2rem 0.5rem; border-radius: 4px;">GET raw</a>
             </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Edge service health check and runtime state.</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Static build marker. <strong>Not a liveness probe</strong> &mdash; it cannot observe the pipeline.</p>
           </div>
         </div>
       </div>
@@ -549,7 +634,7 @@ def generate_html(receipts: list[dict]) -> str:
   </main>
 
   <footer>
-    HUMMBL Broadcast • Edge Node anvil • Cloudflare Pages Deployment • Zero External Dependencies
+    HUMMBL Broadcast &mdash; pre-alpha, not broadcasting &bull; static site on Cloudflare Pages &bull; zero external dependencies
   </footer>
 
   <script>
@@ -580,6 +665,7 @@ def generate_html(receipts: list[dict]) -> str:
           <div style="display: flex; gap: 0.5rem; margin-top: auto;">
             <span class="tag">${{s.adapter}}</span>
             <span class="tag">${{s.resolution}}</span>
+            <span class="tag" style="border-color: var(--accent); color: var(--accent);">${{s.state}}</span>
           </div>
         </div>
       `).join('');
@@ -588,26 +674,48 @@ def generate_html(receipts: list[dict]) -> str:
     function updateCostForecast() {{
       const adapter = document.getElementById('adapterSelect').value;
       const duration = parseInt(document.getElementById('durationSelect').value) || 4;
-      let costRate = adapter === 'h3_max' ? 0.05 : (adapter === 'h3' ? 0.03 : 0.0);
+      const RATES = {{ h3_max_480: {PRICE_H3_MAX_480}, h3_max_768: {PRICE_H3_MAX_768}, h3: {PRICE_H3}, mock: 0.0 }};
+      const costRate = RATES[adapter] !== undefined ? RATES[adapter] : 0.0;
       const totalCost = (costRate * duration).toFixed(2);
       document.getElementById('costEstimate').textContent = '$' + totalCost + ' USD';
-      document.getElementById('latencyEstimate').textContent = (duration * 3) + '-' + (duration * 5) + ' seconds';
+      // Latency stays unasserted until docs/benchmarks.md is actually run.
+      document.getElementById('latencyEstimate').textContent = 'not measured';
+    }}
+
+    // Render ONLY fields the Receipt model actually emits. An absent value is
+    // shown as an em dash -- never substituted with a plausible-looking default.
+    // Fabricating a cost, model, duration or status here would turn mock smoke
+    // output into a false audit record.
+    const ESC = {{ '<': '&lt;', '>': '&gt;', '&': '&amp;' }};
+
+    function cell(v) {{
+      if (v === null || v === undefined || v === '') {{
+        return '<span style="color:var(--text-muted)">&mdash;</span>';
+      }}
+      return String(v).replace(/[<>&]/g, c => ESC[c]);
+    }}
+
+    function num(v, suffix, prefix) {{
+      if (v === null || v === undefined) return cell(null);
+      return (prefix || '') + v + (suffix || '');
     }}
 
     function renderReceipts() {{
       const tbody = document.getElementById('receiptsTableBody');
       if (!RECEIPTS || RECEIPTS.length === 0) {{
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No receipts found in log</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No receipt log present in this build</td></tr>';
         return;
       }}
       tbody.innerHTML = RECEIPTS.map(r => `
         <tr>
-          <td><code style="color: var(--accent);">${{r.receipt_id || r.id || 'rec_default'}}</code></td>
-          <td>${{r.model || 'MiniMax-H3'}}</td>
-          <td>${{r.duration_seconds || 4}}s</td>
-          <td><strong style="color: var(--success); font-family: var(--font-mono);">$${{(r.cost_usd || 0.20).toFixed(2)}}</strong></td>
-          <td><span style="color: var(--success); font-weight: 700;">COMPLETED</span></td>
-          <td style="color: var(--text-muted); font-size: 0.75rem;">${{r.timestamp || '2026-08-31T20:00:00Z'}}</td>
+          <td style="color: var(--text-muted); font-size: 0.75rem; font-family: var(--font-mono);">${{cell(r.ts)}}</td>
+          <td><code style="color: var(--accent);">${{cell(r.event)}}</code></td>
+          <td>${{cell(r.prompt_id)}}</td>
+          <td style="font-size: 0.7rem; font-family: var(--font-mono); color: var(--text-muted);">${{cell(r.task_id)}}</td>
+          <td>${{cell(r.tier)}}</td>
+          <td style="font-family: var(--font-mono);">${{num(r.latency_seconds, 's')}}</td>
+          <td style="font-family: var(--font-mono);">${{num(r.cost_usd, '', '$')}}</td>
+          <td style="font-size: 0.75rem; color: var(--text-muted);">${{cell(r.note)}}</td>
         </tr>
       `).join('');
     }}
@@ -626,9 +734,14 @@ def build():
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
     API_DIR.mkdir(parents=True, exist_ok=True)
 
-    receipts = load_mock_receipts()
+    receipts, receipts_file_present = load_mock_receipts()
 
     print("Building hummbl-broadcast static site...")
+    print(f"  broadcast_state = {BROADCAST_STATE}")
+    print(
+        f"  receipts: {len(receipts)} mock rows "
+        f"(receipts.mock.jsonl present={receipts_file_present})"
+    )
 
     # Write HTML
     html_content = generate_html(receipts)
@@ -636,19 +749,63 @@ def build():
 
     # Write API endpoints
     (API_DIR / "schedule.json").write_text(json.dumps(SCHEDULE_DATA, indent=2), encoding="utf-8")
-    (API_DIR / "receipts.json").write_text(json.dumps(receipts, indent=2), encoding="utf-8")
+    # Envelope, not a bare array: a consumer must not be able to read these as
+    # real audit receipts. The disclosure travels with the data.
+    receipts_doc = {
+        "data_source": "mock-adapter",
+        "is_real_generation": False,
+        "disclosure": (
+            "These receipts are output of the mock adapter from a local or CI smoke "
+            "run. No real MiniMax API call was made, no clip was generated, and no "
+            "money was spent. Null fields are null, not zero."
+        ),
+        "receipt_log_present_at_build": receipts_file_present,
+        "receipts_count": len(receipts),
+        "receipts": receipts,
+    }
+    (API_DIR / "receipts.json").write_text(
+        json.dumps(receipts_doc, indent=2), encoding="utf-8"
+    )
 
     summary = {
         "repo": "hummbl-broadcast",
         "domain": "broadcast.hummbl.dev",
-        "schedule_blocks": len(SCHEDULE_DATA),
+        "pipeline_stage": PIPELINE_STAGE,
+        "broadcast_state": "not-broadcasting",
+        "is_live": False,
+        "verified_real_generation_runs": 0,
+        "benchmarks_status": "not-run",
+        "schedule_blocks_planned": len(SCHEDULE_DATA),
         "receipts_count": len(receipts),
-        "adapters_supported": ["MiniMax-H3", "MiniMax-H3 Max", "Mock"],
-        "daily_cost_cap_usd": 10.0,
-        "status": "24/7 ACTIVE"
+        "receipts_are_mock": True,
+        "adapters_implemented": ["Mock"],
+        "adapters_specified_untested": ["MiniMax-H3", "MiniMax-H3 Max"],
+        "receipt_hashing_implemented": False,
+        "configured_daily_cost_cap_usd": 10.0,
+        "pricing_source": "hummbl_broadcast.models.PRICE_PER_SECOND",
+        "disclosure": (
+            "Static build artifact. Describes design and configuration, not "
+            "runtime state. Cannot report liveness."
+        ),
     }
     (API_DIR / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    (API_DIR / "health.json").write_text(json.dumps({"status": "healthy", "service": "broadcast.hummbl.dev", "version": "1.0.0"}, indent=2), encoding="utf-8")
+    # A static file on a CDN cannot observe the pipeline, so it must not claim
+    # to. This endpoint reports only that the site build was published, and says
+    # plainly that it is not a liveness probe.
+    health = {
+        "status": "not_measured",
+        "service": "broadcast.hummbl.dev",
+        "artifact_type": "static",
+        "is_liveness_probe": False,
+        "disclosure": (
+            "This file is a build artifact served from a CDN. It has no "
+            "connection to the broadcast pipeline and cannot report its health. "
+            "Its presence means the site deployed, nothing more."
+        ),
+        "pipeline_broadcast_state": "not-broadcasting",
+        "site_build_version": "0.1.0-prealpha",
+    }
+    (API_DIR / "health.json").write_text(json.dumps(health, indent=2), encoding="utf-8")
 
     print(f"Artifacts successfully written to {PUBLIC_DIR}")
 
