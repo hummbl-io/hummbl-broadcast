@@ -15,6 +15,7 @@ is labelled pre-alpha and all receipt data is labelled mock.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -23,15 +24,26 @@ API_DIR = PUBLIC_DIR / "api"
 
 # Single source of truth for pricing: the package's verified table. Imported
 # rather than restated so the published page cannot drift from the code.
-# Fail loud if unavailable -- do not fall back to hardcoded guesses.
+# Fail loud if unavailable -- never fall back to hardcoded guesses, because a
+# stale rate on the published page is exactly the drift this import prevents.
+#
+# The repo uses a src layout, so fall back to importing from src/ directly when
+# the package is not installed (a bare checkout, or a pre-push hook running
+# pytest outside a venv). Raise ImportError, not SystemExit: this module is
+# imported by tests, and SystemExit during collection aborts the whole pytest
+# run with INTERNALERROR instead of reporting a normal collection error.
 try:
     from hummbl_broadcast.models import PRICE_PER_SECOND, ModelTier
-except ImportError as exc:  # pragma: no cover - build environment error
-    raise SystemExit(
-        "build_site.py requires the hummbl_broadcast package "
-        '(pip install -e ".[dev]") so published pricing matches '
-        f"models.PRICE_PER_SECOND. Import failed: {exc}"
-    ) from exc
+except ImportError:  # pragma: no cover - depends on install state
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+    try:
+        from hummbl_broadcast.models import PRICE_PER_SECOND, ModelTier
+    except ImportError as exc:
+        raise ImportError(
+            "build_site.py needs hummbl_broadcast.models.PRICE_PER_SECOND so "
+            "the published rate card cannot drift from the code. Install the "
+            'package with: pip install -e ".[dev]"'
+        ) from exc
 
 # Published state. The pipeline has never completed a verified real run.
 BROADCAST_STATE = "PRE-ALPHA - NOT BROADCASTING"
