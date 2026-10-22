@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/agy/cloudflare-pages-publishing
   workflow_dispatch:
 
 permissions:
