@@ -82,7 +82,7 @@ class Daemon:
         if not path.exists():
             return 0
         loaded = 0
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue

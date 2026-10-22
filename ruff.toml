@@ -30,6 +30,12 @@ target-version = "py311"
 line-length = 120
 
 [lint]
+# The canonical config selects PLW1514, but that rule is preview-only: without
+# this flag ruff reports "Selection `PLW1514` has no effect because preview is
+# not enabled" and the check silently never runs. Enabling preview makes the
+# fleet's own stated selection effective rather than diverging from it. Measured
+# cost here: it surfaces PLW1514 and nothing else.
+preview = true
 select = [
     "PLW1514",  # missing encoding on open()
     "B904",     # raise ... from err in except blocks

@@ -75,7 +75,7 @@ async def test_daemon_drains_on_kill_switch_signal(tmp_path: Path):
     await asyncio.wait_for(daemon.run(), timeout=5.0)
 
     # And it should have produced at least one receipt before draining
-    receipts = Path(cfg.receipts_path).read_text().splitlines()
+    receipts = Path(cfg.receipts_path).read_text(encoding="utf-8").splitlines()
     assert any('"event":"shutdown"' in line for line in receipts), (
         f"Expected shutdown receipt, got {receipts}"
     )
