@@ -14,6 +14,7 @@ is labelled pre-alpha and all receipt data is labelled mock.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -112,10 +113,9 @@ def load_mock_receipts() -> tuple[list[dict], bool]:
     for line in receipts_file.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line:
-            try:
+            # A malformed line is skipped rather than published as a receipt.
+            with contextlib.suppress(json.JSONDecodeError):
                 receipts.append(json.loads(line))
-            except json.JSONDecodeError:
-                pass
     return receipts, True
 
 
