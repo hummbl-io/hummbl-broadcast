@@ -23,7 +23,7 @@ import os
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import httpx
 
@@ -116,7 +116,7 @@ class MiniMaxH3Adapter:
             tier=prompt.tier,
             resolution=prompt.resolution,
             duration_seconds=prompt.duration_seconds,
-            submitted_at=datetime.now(timezone.utc),
+            submitted_at=datetime.now(UTC),
             status="queued",
         )
         async with self._lock:
@@ -169,7 +169,7 @@ class MiniMaxH3Adapter:
             resolution=task.resolution,
             duration_seconds=float(task.duration_seconds),
             content_url=url,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             latency_seconds=latency,
             cost_usd=cost,
         )

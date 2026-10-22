@@ -1,6 +1,7 @@
 """Kill switch tests."""
 
 import asyncio
+import contextlib
 import os
 from pathlib import Path
 
@@ -37,10 +38,8 @@ async def test_filesystem_sentinel(tmp_path: Path):
     await asyncio.wait_for(k.wait(), timeout=2.0)
     assert k.tripped
     watcher.cancel()
-    try:
+    with contextlib.suppress(asyncio.CancelledError, Exception):
         await watcher
-    except (asyncio.CancelledError, Exception):
-        pass
 
 
 def test_filesystem_sentinel_picked_up_immediately(tmp_path: Path):

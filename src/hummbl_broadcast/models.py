@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import StrEnum
 from typing import Any
 
@@ -138,7 +138,7 @@ class BrandOverlay(BaseModel):
 class Receipt(BaseModel):
     """Audit record for every generation + broadcast event."""
 
-    ts: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
     event: str  # submit | poll | success | failure | broadcast | cost_cap | kill_switch
     prompt_id: str | None = None
     task_id: str | None = None
