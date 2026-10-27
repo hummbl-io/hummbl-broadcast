@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import os
 import tempfile
+import tomllib  # py3.11+
 from pathlib import Path
 
-import tomllib  # py3.11+
 from pydantic import BaseModel, Field
 
 
@@ -57,13 +57,13 @@ class Config(BaseModel):
     dry_run: bool = True  # default safe
 
     @classmethod
-    def from_file(cls, path: str | Path) -> "Config":
+    def from_file(cls, path: str | Path) -> Config:
         with open(path, "rb") as f:
             data = tomllib.load(f)
         return cls(**data)
 
     @classmethod
-    def from_env(cls) -> "Config":
+    def from_env(cls) -> Config:
         """Build config with env overrides for secrets."""
         cfg = cls()
         if k := os.environ.get("MINIMAX_API_KEY"):

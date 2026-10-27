@@ -1,6 +1,6 @@
 """Composer tests — verifies overlay coordinates don't crash."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -18,7 +18,7 @@ def clip() -> Clip:
         resolution=Resolution.P480,
         duration_seconds=5.0,
         content_url="https://x/y.mp4",
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         latency_seconds=42.0,
         cost_usd=0.25,
     )

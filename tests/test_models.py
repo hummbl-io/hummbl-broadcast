@@ -1,13 +1,13 @@
 """Tests for data models and pricing."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
 from hummbl_broadcast.models import (
+    MAX_INFLIGHT,
     PRICE_PER_SECOND,
     RPM_LIMIT,
-    MAX_INFLIGHT,
     Clip,
     ModelTier,
     Prompt,
@@ -65,7 +65,7 @@ def test_clip_carries_cost_and_latency():
         resolution=Resolution.P480,
         duration_seconds=5.0,
         content_url="https://x/y.mp4",
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         latency_seconds=42.0,
         cost_usd=0.25,
     )

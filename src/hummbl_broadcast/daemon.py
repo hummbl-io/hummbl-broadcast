@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 from .adapters import VideoAdapter, make_adapter
@@ -82,7 +82,7 @@ class Daemon:
         if not path.exists():
             return 0
         loaded = 0
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
@@ -129,7 +129,7 @@ class Daemon:
                 # Pick the next prompt — idle wait when empty
                 try:
                     prompt = await asyncio.wait_for(self.queue.get(), timeout=1.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     break  # no prompts available; fall through to poll cycle
                 if not self.cost.can_spend(estimate_cost_usd(prompt.tier, prompt.duration_seconds)):
                     # Re-queue and back off
@@ -156,7 +156,7 @@ class Daemon:
 
     async def _poll_all(self) -> None:
         ready: list[tuple[Prompt, str]] = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for task_id, (prompt, _) in list(self._inflight.items()):
             t = Task(
                 task_id=task_id,

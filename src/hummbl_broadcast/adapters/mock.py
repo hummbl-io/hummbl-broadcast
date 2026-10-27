@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from ..models import Clip, Prompt, Resolution, Task
 from .base import VideoAdapter
@@ -32,7 +32,7 @@ class MockAdapter:
             tier=prompt.tier,
             resolution=prompt.resolution,
             duration_seconds=prompt.duration_seconds,
-            submitted_at=datetime.now(timezone.utc),
+            submitted_at=datetime.now(UTC),
             status="queued",
         )
         self._tasks[task.task_id] = task
@@ -65,7 +65,7 @@ class MockAdapter:
             resolution=task.resolution,
             duration_seconds=float(task.duration_seconds),
             content_url=f"https://mock.local/clips/{task.task_id}.mp4",  # type: ignore[arg-type]
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             latency_seconds=latency,
             cost_usd=0.0,
         )

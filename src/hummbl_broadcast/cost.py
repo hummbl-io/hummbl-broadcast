@@ -37,10 +37,13 @@ class CostGovernor:
         self._trim(time.monotonic())
 
     def can_spend(self, usd: float) -> bool:
+        # SIM103 would collapse the two guards into one negated expression.
+        # Kept explicit: the hourly and daily caps are separate limits and each
+        # should stay independently readable in spend-limiting code.
         now = time.monotonic()
         if self._window_usd(now, 3600.0) + usd > self._cfg.max_cost_per_hour_usd:
             return False
-        if self._window_usd(now, 86400.0) + usd > self._cfg.max_cost_per_day_usd:
+        if self._window_usd(now, 86400.0) + usd > self._cfg.max_cost_per_day_usd:  # noqa: SIM103
             return False
         return True
 

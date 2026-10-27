@@ -26,7 +26,7 @@ async def test_mock_publishes_every_prompt_and_shuts_down(tmp_path: Path):
 
     expected = {
         json.loads(line)["id"]
-        for line in Path(cfg.prompts_path).read_text().splitlines()
+        for line in Path(cfg.prompts_path).read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     }
     assert expected
@@ -40,7 +40,7 @@ async def test_mock_publishes_every_prompt_and_shuts_down(tmp_path: Path):
                 await running
                 pytest.fail("Daemon exited before publishing every prompt")
             if receipts_path.exists():
-                receipts = [json.loads(line) for line in receipts_path.read_text().splitlines()]
+                receipts = [json.loads(line) for line in receipts_path.read_text(encoding="utf-8").splitlines()]
                 assert not any(row["event"].endswith("error") for row in receipts)
                 if {r["prompt_id"] for r in receipts if r["event"] == "broadcast"} == expected:
                     return
@@ -53,7 +53,7 @@ async def test_mock_publishes_every_prompt_and_shuts_down(tmp_path: Path):
         Path(cfg.kill_switch.sentinel_path).touch()
         await asyncio.wait_for(running, timeout=5)
 
-    receipts = [json.loads(line) for line in receipts_path.read_text().splitlines()]
+    receipts = [json.loads(line) for line in receipts_path.read_text(encoding="utf-8").splitlines()]
     assert receipts[0]["event"] == "startup"
     assert receipts[-1]["event"] == "shutdown"
     assert len([r for r in receipts if r["event"] == "broadcast"]) == len(expected)

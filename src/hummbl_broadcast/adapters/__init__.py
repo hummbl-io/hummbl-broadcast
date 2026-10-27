@@ -1,8 +1,8 @@
 """Video adapters — pluggable backends."""
 
 from .base import VideoAdapter
-from .mock import MockAdapter
 from .minimax_h3 import MiniMaxH3Adapter
+from .mock import MockAdapter
 
 __all__ = ["VideoAdapter", "MockAdapter", "MiniMaxH3Adapter"]
 

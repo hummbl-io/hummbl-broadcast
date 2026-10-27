@@ -21,11 +21,8 @@ class KillSwitch:
 
     @property
     def tripped(self) -> bool:
-        if self._event.is_set():
-            return True
-        if self._path and self._path.exists():
-            return True
-        return False
+        # Dual mechanism: in-process event, or the on-disk sentinel file.
+        return self._event.is_set() or bool(self._path and self._path.exists())
 
     async def wait(self) -> None:
         await self._event.wait()

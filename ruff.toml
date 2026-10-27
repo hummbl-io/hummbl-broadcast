@@ -1,7 +1,53 @@
 # HUMMBL Fleet Lint Configuration
-# Extends shared config from hummbl-lint-config
-extend = "hummbl_lint_config/ruff.toml"
+#
+# Canonical source: hummbl-io/hummbl-lint-config -> hummbl_lint_config/ruff.toml
+#
+# These settings are inlined rather than extended. The previous
+#   extend = "hummbl_lint_config/ruff.toml"
+# resolved through a committed symlink (git mode 120000) whose target was the
+# absolute path /home/reuben/PROJECTS/hummbl-lint-config/hummbl_lint_config.
+# On Windows that symlink materialises as a plain text file, so ruff refused to
+# start at all:
+#
+#   ruff failed
+#     Cause: Failed to load extended configuration `.../hummbl_lint_config/ruff.toml`
+#     Cause: The system cannot find the path specified. (os error 3)
+#
+# On Linux it resolved only when that sibling repo happened to sit at exactly
+# that absolute path under that username. Since .github/workflows/ci.yml had no
+# ruff step, nothing ever caught it, and the repo drifted to 18 violations of
+# the fleet rules it claimed to follow.
+#
+# The upstream config documents two supported mechanisms: a relative path to a
+# sibling checkout, or installing the hummbl-lint-config package and extending
+# through it. Neither is used here. A relative sibling path makes lint depend on
+# the developer's directory layout, and the package is not published to PyPI,
+# so installing it would add a private-repo credential requirement to CI.
+#
+# Keep in sync with the canonical source when the fleet rules change.
+
+target-version = "py311"
+line-length = 120
+
+[lint]
+# The canonical config selects PLW1514, but that rule is preview-only: without
+# this flag ruff reports "Selection `PLW1514` has no effect because preview is
+# not enabled" and the check silently never runs. Enabling preview makes the
+# fleet's own stated selection effective rather than diverging from it. Measured
+# cost here: it surfaces PLW1514 and nothing else.
+preview = true
+select = [
+    "PLW1514",  # missing encoding on open()
+    "B904",     # raise ... from err in except blocks
+    "SIM",      # simplifications
+    "I",        # isort import ordering
+    "UP",       # pyupgrade — deprecated Python patterns
+]
+ignore = [
+    "SIM108",   # if-else to ternary (readability)
+    "SIM117",   # nested with statements (readability)
+]
 
 [lint.per-file-ignores]
-"tests/*" = ["PLR2004"]
+"tests/*" = ["PLR2004"]  # magic numbers OK in tests
 "evals/*" = ["PLR2004"]
