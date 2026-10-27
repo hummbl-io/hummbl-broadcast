@@ -1,0 +1,23 @@
+{
+  "repo": "hummbl-broadcast",
+  "domain": "broadcast.hummbl.dev",
+  "pipeline_stage": "skeleton",
+  "broadcast_state": "not-broadcasting",
+  "is_live": false,
+  "verified_real_generation_runs": 0,
+  "benchmarks_status": "not-run",
+  "schedule_blocks_planned": 4,
+  "receipts_count": 0,
+  "receipts_are_mock": true,
+  "adapters_implemented": [
+    "Mock"
+  ],
+  "adapters_specified_untested": [
+    "MiniMax-H3",
+    "MiniMax-H3 Max"
+  ],
+  "receipt_hashing_implemented": false,
+  "configured_daily_cost_cap_usd": 10.0,
+  "pricing_source": "hummbl_broadcast.models.PRICE_PER_SECOND",
+  "disclosure": "Static build artifact. Describes design and configuration, not runtime state. Cannot report liveness."
+}

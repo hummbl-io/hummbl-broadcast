@@ -1,0 +1,9 @@
+{
+  "status": "not_measured",
+  "service": "broadcast.hummbl.dev",
+  "artifact_type": "static",
+  "is_liveness_probe": false,
+  "disclosure": "This file is a build artifact served from a CDN. It has no connection to the broadcast pipeline and cannot report its health. Its presence means the site deployed, nothing more.",
+  "pipeline_broadcast_state": "not-broadcasting",
+  "site_build_version": "0.1.0-prealpha"
+}

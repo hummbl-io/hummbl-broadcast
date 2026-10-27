@@ -9,3 +9,8 @@ receipts*.jsonl
 /dist/
 /build/
 *.local.toml
+
+# HUMMBL fleet
+_internal/
+_between/
+_external/

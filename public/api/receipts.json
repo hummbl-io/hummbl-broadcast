@@ -1,0 +1,8 @@
+{
+  "data_source": "mock-adapter",
+  "is_real_generation": false,
+  "disclosure": "These receipts are output of the mock adapter from a local or CI smoke run. No real MiniMax API call was made, no clip was generated, and no money was spent. Null fields are null, not zero.",
+  "receipt_log_present_at_build": false,
+  "receipts_count": 0,
+  "receipts": []
+}

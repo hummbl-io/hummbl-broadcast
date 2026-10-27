@@ -1,0 +1,66 @@
+name: Deploy Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Run tests (publish gate)
+        run: |
+          pytest -q
+
+      - name: Build static site & JSON schemas
+        run: |
+          python tools/build_site.py
+
+      - name: Verify no fabricated state reached the build
+        shell: bash
+        run: |
+          set -e
+          fail=0
+          for bad in "ON AIR" "24/7 ACTIVE" "Edge Node anvil"; do
+            if grep -rqF "$bad" public/; then
+              echo "FAIL: published artifact asserts unobservable state: $bad"
+              fail=1
+            fi
+          done
+          if grep -q '"status": "healthy"' public/api/health.json; then
+            echo "FAIL: health.json claims healthy; a static file cannot observe the pipeline"
+            fail=1
+          fi
+          if ! grep -q '"is_real_generation": false' public/api/receipts.json; then
+            echo "FAIL: receipts.json lacks its mock-provenance disclosure"
+            fail=1
+          fi
+          [ "$fail" -eq 0 ] || exit 1
+          echo "PASS: no fabricated runtime state in published artifacts"
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: hummbl-broadcast
+          directory: public
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
