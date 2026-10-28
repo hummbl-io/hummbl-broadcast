@@ -6,7 +6,6 @@ regenerate rather than hand-edit.
 
 | Directory | Purpose | Files |
 | --- | --- | ---: |
-| `admission/` |  | 1 |
 | `architecture/` | specs, templates, option spaces, reference maps | 1 |
 | `operations/` | runbooks, playbooks, plans, status and operator notes | 1 |
 | `research/` | research notes and digests | 1 |
