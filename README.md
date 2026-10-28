@@ -83,7 +83,6 @@ docs/
   architecture/architecture.md
   research/benchmarks.md     # what we need to measure before shipping
   operations/standards.md    # the contract any impl must meet
-  admission/                 # governed-AI stand-in admission packet
 examples/
   config.mock.toml
   config.minimax.toml

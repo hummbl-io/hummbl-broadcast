@@ -14,3 +14,4 @@ receipts*.jsonl
 _internal/
 _between/
 _external/
+docs/admission/
