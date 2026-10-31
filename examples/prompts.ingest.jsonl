@@ -1,0 +1,4 @@
+# One staged master per line. "master" and "receipt" resolve inside adapter.library_root.
+# The receipt JSON must contain sha256 (raw hex or "sha256:<hex>") matching the file bytes,
+# plus duration at validation.ffprobe.duration or duration_seconds.
+# {"id":"bed-01","master":"media/bed-01.wav","receipt":"media/bed-01.wav.receipt.json","priority":1}

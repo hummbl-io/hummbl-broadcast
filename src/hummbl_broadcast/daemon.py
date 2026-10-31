@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import shutil
 import time
 from datetime import UTC, datetime, timezone
 from pathlib import Path
@@ -51,6 +52,7 @@ class Daemon:
             base_url=cfg.adapter.base_url,
             poll_interval_seconds=cfg.adapter.poll_interval_seconds,
             request_timeout_seconds=cfg.adapter.request_timeout_seconds,
+            library_root=cfg.adapter.library_root,
         )
         self.brand = BrandOverlay()
         self.composer = Composer(self.brand)
@@ -60,6 +62,8 @@ class Daemon:
         self._running = False
 
     def _make_publisher(self) -> Publisher:
+        if self.cfg.adapter.name == "ingest" and self.cfg.publisher.mode == "rtmp":
+            raise ValueError("ingest adapter publishes to the file sink only; RTMP stays gated")
         if self.cfg.publisher.mode == "rtmp":
             if not self.cfg.publisher.rtmp_url:
                 raise ValueError("publisher.mode=rtmp requires publisher.rtmp_url")
@@ -205,16 +209,7 @@ class Daemon:
             self._inflight.pop(task_id, None)
             self.cost.record(clip.cost_usd)
             self._clip_buffer.append(clip)
-            self.receipts.write(
-                Receipt(
-                    event="success",
-                    prompt_id=clip.prompt_id,
-                    task_id=task_id,
-                    tier=clip.tier,
-                    latency_seconds=clip.latency_seconds,
-                    cost_usd=clip.cost_usd,
-                )
-            )
+            self.receipts.write(self._clip_receipt("success", clip, task_id=task_id))
 
     async def _publish_loop(self) -> None:
         """Drain clip buffer to publisher. Keep min buffer in reserve."""
@@ -224,10 +219,17 @@ class Daemon:
                 continue
             # Pop one
             clip = self._clip_buffer.pop(0)
-            # In dry-run, just compose a placeholder frame
+            # In dry-run, just compose a placeholder frame. Staged masters are
+            # already files: copy them into the file sink and skip the PIL stub.
             output = Path(self.cfg.publisher.output_dir) / f"{clip.id}.png"
             try:
-                if self.cfg.dry_run:
+                if clip.tier == ModelTier.STAGED and clip.local_path:
+                    source = Path(clip.local_path)
+                    output = Path(self.cfg.publisher.output_dir) / f"{clip.id}{source.suffix.lower()}"
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    if output.resolve() != source.resolve():
+                        shutil.copyfile(source, output)
+                elif self.cfg.dry_run:
                     self.composer.compose_to_file(clip, output)
                 else:
                     # Real path: download clip.content_url first, then compose
@@ -236,9 +238,7 @@ class Daemon:
                         "Run with dry_run=true until adapter is benchmarked."
                     )
                 await self.publisher.publish(output)
-                self.receipts.write(
-                    Receipt(event="broadcast", prompt_id=clip.prompt_id, note=output.name)
-                )
+                self.receipts.write(self._clip_receipt("broadcast", clip, note=output.name))
             except Exception as e:
                 self.receipts.write(
                     Receipt(event="publish_error", prompt_id=clip.prompt_id, note=str(e))
@@ -249,6 +249,24 @@ class Daemon:
 
     def _buffer_seconds(self) -> float:
         return sum(c.duration_seconds for c in self._clip_buffer)
+
+    def _clip_receipt(
+        self, event: str, clip: Clip, task_id: str | None = None, note: str | None = None
+    ) -> Receipt:
+        staged = clip.media_kind is not None
+        return Receipt(
+            event=event,
+            prompt_id=clip.prompt_id,
+            task_id=task_id,
+            tier=clip.tier,
+            latency_seconds=clip.latency_seconds,
+            cost_usd=clip.cost_usd,
+            media_kind=clip.media_kind if staged else None,
+            source_path=clip.source_path if staged else None,
+            upstream_receipt_sha256=clip.upstream_receipt_sha256 if staged else None,
+            duration_seconds=clip.duration_seconds if staged else None,
+            note=note,
+        )
 
 
 async def main() -> None:

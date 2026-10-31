@@ -11,11 +11,13 @@ from pydantic import BaseModel, Field
 
 
 class AdapterConfig(BaseModel):
-    name: str = "mock"  # mock | minimax-h3 | minimax-h3-max
+    name: str = "mock"  # mock | minimax-h3 | minimax-h3-max | ingest
     api_key: str | None = None
     base_url: str = "https://api.minimax.io"
     poll_interval_seconds: float = 10.0
     request_timeout_seconds: float = 60.0
+    # Required when name = "ingest". Masters and receipts must resolve inside it.
+    library_root: str | None = None
 
 
 class CostGovernorConfig(BaseModel):

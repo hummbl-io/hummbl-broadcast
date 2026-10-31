@@ -6,11 +6,20 @@ from datetime import UTC, datetime, timezone
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import (
+    AliasChoices,
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    field_validator,
+    model_validator,
+)
 
 
 class ModelTier(StrEnum):
-    """MiniMax video model tiers."""
+    """Generation tier, or staged-media for a local master that was not generated here."""
 
     HAILUO_02 = "MiniMax-Hailuo-02"
     HAILUO_2_3 = "MiniMax-Hailuo-2.3"
@@ -18,6 +27,7 @@ class ModelTier(StrEnum):
     H3 = "MiniMax-H3"
     H3_MAX_480P = "MiniMax-H3-Max-480P"
     H3_MAX_768P = "MiniMax-H3-Max-768P"
+    STAGED = "staged-media"
 
 
 class Resolution(StrEnum):
@@ -38,6 +48,7 @@ PRICE_PER_SECOND: dict[ModelTier, float] = {
     ModelTier.H3: 0.08,  # 768P $0.08/sec, 2K $0.13/sec (use 768P default)
     ModelTier.H3_MAX_480P: 0.05,
     ModelTier.H3_MAX_768P: 0.08,
+    ModelTier.STAGED: 0.0,
 }
 
 # Rate limits — verified from platform.minimax.io/docs/guides/rate-limits
@@ -65,9 +76,18 @@ def estimate_cost_usd(tier: ModelTier, duration_seconds: int) -> float:
 
 
 class Prompt(BaseModel):
-    """A generation request."""
+    """A generation request, or a pointer at a staged local master."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     id: str
+    # Declared before duration_seconds so the clamp can see a staged master.
+    master_path: str | None = Field(
+        default=None, validation_alias=AliasChoices("master_path", "master")
+    )
+    upstream_receipt_path: str | None = Field(
+        default=None, validation_alias=AliasChoices("upstream_receipt_path", "receipt")
+    )
     text: str = Field(min_length=1, max_length=7000)
     tier: ModelTier = ModelTier.H3_MAX_480P
     resolution: Resolution = Resolution.P480
@@ -76,9 +96,31 @@ class Prompt(BaseModel):
     last_frame_url: HttpUrl | None = None
     priority: int = 0  # higher = more urgent
 
+    @model_validator(mode="before")
+    @classmethod
+    def _default_staged_text(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        master = data.get("master_path", data.get("master"))
+        if master and not str(data.get("text") or "").strip():
+            data = dict(data)
+            name = str(master).replace("\\", "/").rsplit("/", 1)[-1]
+            data["text"] = name or "staged-media"
+        return data
+
+    @classmethod
+    def _is_staged(cls, info: Any) -> bool:
+        return bool(info.data.get("master_path"))
+
     @field_validator("duration_seconds")
     @classmethod
-    def _clamp_duration(cls, v: int) -> int:
+    def _clamp_duration(cls, v: int, info: Any) -> int:
+        # Staged masters keep the caller duration. The clip clock comes from
+        # the upstream receipt, which can be longer than a generation clip.
+        if cls._is_staged(info):
+            if v < 1:
+                raise ValueError("staged media duration_seconds must be >= 1")
+            return v
         # Hard bounds first
         if v < 4:
             return 5  # H3 Max min; safer default
@@ -89,11 +131,20 @@ class Prompt(BaseModel):
     @field_validator("duration_seconds", mode="after")
     @classmethod
     def _clamp_duration_after(cls, v: int, info: Any) -> int:
+        if cls._is_staged(info):
+            return v
         # H3 Max requires >= 5
         tier = info.data.get("tier")
         if tier in {ModelTier.H3_MAX_480P, ModelTier.H3_MAX_768P} and v < 5:
             return 5
         return v
+
+    @model_validator(mode="after")
+    def _force_staged_tier(self) -> Prompt:
+        # A local master is not a MiniMax generation, even if the row names one.
+        if self.master_path and self.tier != ModelTier.STAGED:
+            self.tier = ModelTier.STAGED
+        return self
 
 
 class Task(BaseModel):
@@ -117,11 +168,14 @@ class Clip(BaseModel):
     tier: ModelTier
     resolution: Resolution
     duration_seconds: float
-    content_url: HttpUrl
+    content_url: AnyUrl
     local_path: str | None = None
     generated_at: datetime
     latency_seconds: float  # wall-clock from submit to success
     cost_usd: float
+    media_kind: str | None = None  # video | audio | still
+    source_path: str | None = None  # path relative to the ingest library
+    upstream_receipt_sha256: str | None = None
 
 
 class BrandOverlay(BaseModel):
@@ -145,4 +199,8 @@ class Receipt(BaseModel):
     tier: ModelTier | None = None
     latency_seconds: float | None = None
     cost_usd: float | None = None
+    media_kind: str | None = None
+    source_path: str | None = None
+    upstream_receipt_sha256: str | None = None
+    duration_seconds: float | None = None
     note: str | None = None
