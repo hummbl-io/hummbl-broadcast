@@ -1,0 +1,29 @@
+# Staged-media ingest. Plays local masters that already carry an artifact
+# receipt (sha256 of the file bytes, duration, optional species).
+# Does not call MiniMax. Refuses publisher.mode = "rtmp".
+
+brand_overlay_path = ""
+prompts_path = "examples/prompts.ingest.jsonl"
+receipts_path = "receipts.ingest.jsonl"
+dry_run = true
+
+[adapter]
+name = "ingest"
+library_root = "examples/library"
+poll_interval_seconds = 0.5
+request_timeout_seconds = 5.0
+
+[cost]
+max_cost_per_hour_usd = 5.0
+max_cost_per_day_usd = 10.0
+max_inflight_tasks = 2
+
+[buffer]
+min_buffer_seconds = 1.0
+target_buffer_seconds = 30.0
+clip_reuse_max = 1
+
+[publisher]
+mode = "file"
+output_dir = "./out/ingest"
+loop = false
