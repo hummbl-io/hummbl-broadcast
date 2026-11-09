@@ -1,10 +1,11 @@
 """Video adapters — pluggable backends."""
 
 from .base import VideoAdapter
+from .ingest import StagedMediaAdapter
 from .minimax_h3 import MiniMaxH3Adapter
 from .mock import MockAdapter
 
-__all__ = ["VideoAdapter", "MockAdapter", "MiniMaxH3Adapter"]
+__all__ = ["VideoAdapter", "MockAdapter", "MiniMaxH3Adapter", "StagedMediaAdapter"]
 
 
 def make_adapter(name: str, **kwargs: object) -> VideoAdapter:
@@ -13,6 +14,11 @@ def make_adapter(name: str, **kwargs: object) -> VideoAdapter:
         return MockAdapter(
             synthetic_latency_seconds=float(kwargs.get("poll_interval_seconds", 2.0)),
         )
+    if name == "ingest":
+        root = kwargs.get("library_root")
+        if not isinstance(root, str) or not root.strip():
+            raise ValueError("adapter ingest requires library_root")
+        return StagedMediaAdapter(library_root=root)
     if name in ("minimax-h3", "minimax-h3-max"):
         return MiniMaxH3Adapter(
             api_key=kwargs.get("api_key"),  # type: ignore[arg-type]
