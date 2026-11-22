@@ -46,6 +46,22 @@ except ImportError:  # pragma: no cover - depends on install state
             'package with: pip install -e ".[dev]"'
         ) from exc
 
+# Same rule as the rate card, applied to the daily cost cap: the published cap
+# is the governor default, not a figure typed into the page. Example TOML files
+# may set a different cap, so the page must not restate one.
+try:
+    from hummbl_broadcast.config import CostGovernorConfig
+except ImportError:  # pragma: no cover - depends on install state
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+    try:
+        from hummbl_broadcast.config import CostGovernorConfig
+    except ImportError as exc:
+        raise ImportError(
+            "build_site.py needs hummbl_broadcast.config.CostGovernorConfig so "
+            "the published daily cost cap cannot drift from the governor. "
+            'Install the package with: pip install -e ".[dev]"'
+        ) from exc
+
 # Published state. The pipeline has never completed a verified real run.
 BROADCAST_STATE = "PRE-ALPHA - NOT BROADCASTING"
 PIPELINE_STAGE = "skeleton"
@@ -53,6 +69,8 @@ PIPELINE_STAGE = "skeleton"
 PRICE_H3 = PRICE_PER_SECOND[ModelTier.H3]
 PRICE_H3_MAX_480 = PRICE_PER_SECOND[ModelTier.H3_MAX_480P]
 PRICE_H3_MAX_768 = PRICE_PER_SECOND[ModelTier.H3_MAX_768P]
+
+DAILY_COST_CAP_USD = CostGovernorConfig().max_cost_per_day_usd
 
 
 SCHEDULE_DATA = [
@@ -485,7 +503,7 @@ def generate_html(receipts: list[dict]) -> str:
       </div>
       <div class="stat-card">
         <div class="stat-label">Configured Cost Cap</div>
-        <div class="stat-value" style="color: var(--success);">$10.00 / day</div>
+        <div class="stat-value" style="color: var(--success);">${DAILY_COST_CAP_USD:.2f} / day</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Execution Floor</div>
@@ -561,7 +579,7 @@ def generate_html(receipts: list[dict]) -> str:
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
                 <span style="color: var(--text-muted);">Configured daily cap:</span>
-                <span style="font-family: var(--font-mono);">$10.00</span>
+                <span style="font-family: var(--font-mono);">${DAILY_COST_CAP_USD:.2f}</span>
               </div>
               <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); background: #0e0f17; padding: 0.75rem; border-radius: 6px;">
                 <strong>Watermark invariant (designed):</strong> Every broadcast clip is
@@ -793,7 +811,8 @@ def build():
         "adapters_implemented": ["Mock"],
         "adapters_specified_untested": ["MiniMax-H3", "MiniMax-H3 Max"],
         "receipt_hashing_implemented": False,
-        "configured_daily_cost_cap_usd": 10.0,
+        "configured_daily_cost_cap_usd": DAILY_COST_CAP_USD,
+        "cost_cap_source": "hummbl_broadcast.config.CostGovernorConfig.max_cost_per_day_usd",
         "pricing_source": "hummbl_broadcast.models.PRICE_PER_SECOND",
         "disclosure": (
             "Static build artifact. Describes design and configuration, not "

@@ -30,6 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 import tools.build_site as bs  # noqa: E402
+from hummbl_broadcast.config import CostGovernorConfig  # noqa: E402
 from hummbl_broadcast.models import PRICE_PER_SECOND, ModelTier  # noqa: E402
 
 # Strings that assert operational state a static artifact cannot observe.
@@ -180,6 +181,20 @@ class TestPublishedPricingMatchesCode(SiteBuildTestCase):
         for tier in (ModelTier.H3, ModelTier.H3_MAX_480P, ModelTier.H3_MAX_768P):
             rendered = f"${PRICE_PER_SECOND[tier]:.2f}/sec"
             self.assertIn(rendered, html, f"{tier} rate missing or stale")
+
+    def test_daily_cap_matches_governor_default(self):
+        """Issue #10: the page must not invent a cap the governor does not use."""
+        cap = CostGovernorConfig().max_cost_per_day_usd
+        rendered = f"${cap:.2f}"
+        html = self._html()
+        self.assertIn(f"{rendered} / day", html)
+        self.assertNotIn("$10.00 / day", html)
+        summary = self._json("summary.json")
+        self.assertEqual(summary["configured_daily_cost_cap_usd"], cap)
+        self.assertEqual(
+            summary["cost_cap_source"],
+            "hummbl_broadcast.config.CostGovernorConfig.max_cost_per_day_usd",
+        )
 
     def test_latency_is_not_asserted(self):
         html = self._html()
