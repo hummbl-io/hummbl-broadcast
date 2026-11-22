@@ -115,6 +115,7 @@ async def test_ingest_video_audio_and_still(tmp_path: Path):
         assert clip.tier == ModelTier.STAGED
         assert clip.source_path == master.relative_to(tmp_path).as_posix()
         assert clip.upstream_receipt_sha256 == _sha256(master.read_bytes())
+        assert clip.proof_kind == "source_receipt"
         assert clip.local_path == str(master.resolve())
 
 
