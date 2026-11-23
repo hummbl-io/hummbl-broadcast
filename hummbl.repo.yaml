@@ -1,0 +1,33 @@
+schema: "hummbl-repo-manifest@0.1"
+
+repo:
+  full_name: "hummbl-io/hummbl-broadcast"
+  name: "hummbl-broadcast"
+  visibility: "public"
+  default_branch: "main"
+  status: "active"
+  remote: "https://github.com/hummbl-io/hummbl-broadcast.git"
+
+purpose:
+  type: "application"
+  summary: "HUMMBL broadcast pipeline skeleton and static site. Pre-alpha; not broadcasting."
+  source_of_record: "git"
+
+authority:
+  steward: "HUMMBL"
+  approving_human: "Reuben Bowlby"
+  agents_file: "AGENTS.md"
+
+governance:
+  agents_required: true
+  model_provider_neutral: false
+
+validation:
+  required_before_merge: false
+  required_before_release: false
+
+docs:
+  readme: "README.md"
+  agents: "AGENTS.md"
+  security_policy: "SECURITY.md"
+  license: "LICENSE"
