@@ -106,6 +106,8 @@ class TestNoFabricatedRuntimeState(SiteBuildTestCase):
         html = self._html()
         self.assertIn("NOT BROADCASTING", html)
         self.assertIn("PRE-ALPHA", html)
+        self.assertIn("No playback clock", html)
+        self.assertNotIn("24/7 AI-Generated", html)
 
     def test_html_disclaims_receipt_verifiability(self):
         """Positive counterpart: the page must say what the receipts are not."""

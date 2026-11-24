@@ -1,6 +1,6 @@
 # hummbl-broadcast
 
-24/7 AI-generated video broadcast pipeline for HUMMBL.
+PRE-ALPHA — NOT BROADCASTING. Design note. No playback clock.
 
 ## What this is
 

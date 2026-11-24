@@ -176,6 +176,7 @@ class Clip(BaseModel):
     media_kind: str | None = None  # video | audio | still
     source_path: str | None = None  # path relative to the ingest library
     upstream_receipt_sha256: str | None = None
+    proof_kind: str | None = None  # source_receipt | playback_receipt
 
 
 class BrandOverlay(BaseModel):

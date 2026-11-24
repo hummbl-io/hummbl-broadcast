@@ -14,6 +14,7 @@ from pathlib import Path
 
 from pydantic import AnyUrl
 
+from ..claim import ClockGate, ProofKind, admit_proof
 from ..models import Clip, ModelTier, Prompt, Task
 
 VIDEO_SUFFIXES = {".mp4", ".webm", ".mov", ".mkv"}
@@ -68,6 +69,7 @@ class StagedMediaAdapter:
             media_kind=kind,
             source_path=relative,
             upstream_receipt_sha256=digest,
+            proof_kind=admit_proof(ProofKind.SOURCE, ClockGate.DESIGN_NOTE),
         )
         self._ready[task_id] = clip
         return Task(

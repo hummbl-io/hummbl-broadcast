@@ -62,8 +62,23 @@ except ImportError:  # pragma: no cover - depends on install state
             'Install the package with: pip install -e ".[dev]"'
         ) from exc
 
+# The published status sentence comes from the claim contract, so the page
+# cannot drift from the gate that decides which proofs may be called playback.
+try:
+    from hummbl_broadcast.claim import ClockGate, status_sentence
+except ImportError:  # pragma: no cover - depends on install state
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+    try:
+        from hummbl_broadcast.claim import ClockGate, status_sentence
+    except ImportError as exc:
+        raise ImportError(
+            "build_site.py needs hummbl_broadcast.claim so the published status "
+            "sentence cannot drift from the claim contract. Install the package "
+            'with: pip install -e ".[dev]"'
+        ) from exc
+
 # Published state. The pipeline has never completed a verified real run.
-BROADCAST_STATE = "PRE-ALPHA - NOT BROADCASTING"
+BROADCAST_STATE = status_sentence(ClockGate.DESIGN_NOTE)
 PIPELINE_STAGE = "skeleton"
 
 PRICE_H3 = PRICE_PER_SECOND[ModelTier.H3]
@@ -146,7 +161,7 @@ def generate_html(receipts: list[dict]) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HUMMBL Broadcast — 24/7 AI-Generated Video Pipeline</title>
+  <title>HUMMBL Broadcast — pre-alpha, not broadcasting</title>
   <style>
     :root {{
       --bg: #090a10;
@@ -455,7 +470,7 @@ def generate_html(receipts: list[dict]) -> str:
       <div class="offline-dot"></div>
       <div>
         <h1>HUMMBL Broadcast</h1>
-        <div style="font-size: 0.75rem; color: var(--text-muted);">24/7 Governed Video & Stream Production Pipeline &mdash; pre-alpha skeleton</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">{BROADCAST_STATE}</div>
       </div>
       <span class="badge">NOT BROADCASTING</span>
     </div>

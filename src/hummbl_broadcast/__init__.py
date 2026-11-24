@@ -1,3 +1,3 @@
-"""hummbl-broadcast: 24/7 AI-generated video broadcast pipeline."""
+"""hummbl-broadcast: PRE-ALPHA — NOT BROADCASTING. Design note. No playback clock."""
 
 __version__ = "0.1.0"
